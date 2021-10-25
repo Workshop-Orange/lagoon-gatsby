@@ -63,6 +63,11 @@ clean_build() {
     return $BUILDRET
 }
 
+usage() {
+    echo "lagoon-gatsby build [incremental|clean]"
+    exit 0;
+}
+
 # --------------------------------------------------------------------#
 # Paths configs
 export _PWD=`pwd`
@@ -88,15 +93,22 @@ export NODE_ENV=production
 
 START=`date +%s`
 
-if [ "$1" == "clean" ]; then
+if [ "$1" != "build" ]; then
+    usage;
+fi
+
+if [ "$2" == "clean" ]; then
     LAGOON_GATSBY_BUILDTYPE="clean"
     echo "Build-$LAGOON_GATSBY_BUILDTYPE starting"
     clean_build
-else
+elif [ "$2" == "incremental" ]; then
     LAGOON_GATSBY_BUILDTYPE="incremental"
     echo "Build-$LAGOON_GATSBY_BUILDTYPE starting"
     incremental_build
+else
+    usage;
 fi;
+
 BUILDRET=$?
 
 END=`date +%s`

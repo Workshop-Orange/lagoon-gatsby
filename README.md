@@ -10,4 +10,9 @@ The `lagoon-gatsby` binary requires rsync to be installed in your container.
 TODO
 
 ## Usage
-TODO
+
+### Incremental build
+LAGOON_GATSBY_APP=/app LAGOON_GATSBY_STORAGE=/app/storage/ /app/lagoon-gatsby build incremental
+
+### Clean build
+LAGOON_GATSBY_APP=/app LAGOON_GATSBY_STORAGE=/app/storage/ /app/lagoon-gatsby build clean
