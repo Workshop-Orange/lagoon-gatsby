@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 incremental_build() {
     if [ -z "$RSYNC" ]; then
@@ -63,13 +63,25 @@ clean_build() {
     return $BUILDRET
 }
 
+nginx_sync() {
+    if [ -z "$RSYNC" ]; then
+        echo "Error: rsync binary was not found in the environment"
+        return 220;
+    fi
+    
+    $RSYNC -a $LAGOON_GATSBY_ROOT_BUILD_CACHE/public/ $LAGOON_GATSBY_APP
+    PUBLIC_IMPORT_RET=$?
+    
+    return $PUBLIC_IMPORT_RET;
+}
+
 usage() {
-    echo "lagoon-gatsby [build|run] [incremental|clean]"
-    exit 0;
+    echo "lagoon-gatsby [build|run] [incremental|clean|nginxsync]"
+    exit 100;
 }
 
 # --------------------------------------------------------------------#
-# Paths configs
+# Paths
 export _PWD=`pwd`
 
 if [ -z "$LAGOON_GATSBY_APP" ]; then
@@ -109,11 +121,16 @@ elif [ "$2" == "incremental" ]; then
     LAGOON_GATSBY_BUILDTYPE="incremental"
     echo "Build-$LAGOON_GATSBY_BUILDTYPE starting"
     incremental_build
+    BUILDRET=$?
+elif [ "$2" == "nginxsync" ]; then
+    LAGOON_GATSBY_BUILDTYPE="sync"
+    echo "Build-$LAGOON_GATSBY_BUILDTYPE to starting"
+    nginx_sync
+    BUILDRET=$?
 else
     usage;
 fi;
 
-BUILDRET=$?
 
 END=`date +%s`
 DURATION=$(expr $END - $START);
