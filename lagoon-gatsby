@@ -64,7 +64,7 @@ clean_build() {
 }
 
 usage() {
-    echo "lagoon-gatsby build [incremental|clean]"
+    echo "lagoon-gatsby [build|run] [incremental|clean]"
     exit 0;
 }
 
@@ -93,7 +93,11 @@ export NODE_ENV=production
 
 START=`date +%s`
 
-if [ "$1" != "build" ]; then
+if [ "$1" == "build" ]; then
+    export LAGOON_GATSBY_RUNTYPE="build"
+elif [ "$1" == "run" ]; then
+    export LAGOON_GATSBY_RUNTYPE="run"
+else
     usage;
 fi
 
@@ -115,4 +119,10 @@ END=`date +%s`
 DURATION=$(expr $END - $START);
 
 echo "Build-$LAGOON_GATSBY_BUILDTYPE complete in $DURATION seconds"
+
+if [ "$LAGOON_GATSBY_RUNTYPE" == "run" ]; then
+    echo "Enteringing docker-sleep state."
+    while sleep 3600; do :; done
+fi
+
 exit $BUILDRET

@@ -7,7 +7,18 @@ This package is designed to be used inside Lagoon, so of course you need a lagoo
 The `lagoon-gatsby` binary requires rsync to be installed in your container.
 
 ## Installation
-TODO
+
+### POC Container installation
+Add the following to a docker file.
+
+```
+ENV LAGOON_GATSBY_APP=/app
+ENV LAGOON_GATSBY_STORAGE=/app/storage
+RUN wget -c https://github.com/Workshop-Orange/lagoon-gatsby/archive/refs/tags/0.2.tar.gz -O - | tar -xz -C /tmp && \
+    ls -la /tmp/lagoon-gatsby-0.2 && \
+    cp /tmp/lagoon-gatsby-0.2/lagoon-gatsby /usr/bin && \
+    chmod +x /usr/bin/lagoon-gatsby
+```
 
 ## Usage
 You can set `LAGOON_GATSBY_APP` and `LAGOON_GATSBY_STORAGE` in your docker image build, in Lagoon, or on the command line
