@@ -97,6 +97,7 @@ fi
 export LAGOON_GATSBY_ROOT_BUILD_CACHE=$LAGOON_GATSBY_STORAGE/gatsby_build_cache
 
 export RSYNC=`which rsync`
+export NGINX=`which nginx`
 
 # Flags
 export GATSBY_EXPERIMENTAL_PAGE_BUILD_ON_DATA_CHANGES=true
@@ -138,8 +139,13 @@ DURATION=$(expr $END - $START);
 echo "Build-$LAGOON_GATSBY_BUILDTYPE complete in $DURATION seconds"
 
 if [ "$LAGOON_GATSBY_RUNTYPE" == "run" ]; then
-    echo "Enteringing docker-sleep state."
-    while sleep 3600; do :; done
+    if [ "$LAGOON_GATSBY_BUILDTYPE" == "sync" ]; then
+        echo "Starting nginx."
+        $NGINX -g "daemon off;"
+    else 
+        echo "Enteringing docker-sleep state."
+        while sleep 3600; do :; done    
+    fi
 fi
 
 exit $BUILDRET
