@@ -1,0 +1,106 @@
+#!/bin/bash
+
+incremental_build() {
+    if [ -z "$RSYNC" ]; then
+        echo "Error: rsync binary was not found in the environment"
+        return 220;
+    fi
+
+    if [ -z "$LAGOON_GATSBY_ROOT_BUILD_CACHE" ]; then
+        echo "Missing LAGOON_GATSBY_ROOT_BUILD_CACHE ENV variable: $LAGOON_GATSBY_ROOT_BUILD_CACHE"
+        exit 201
+    fi
+    
+    mkdir -p $LAGOON_GATSBY_ROOT_BUILD_CACHE/.cache
+    mkdir -p $LAGOON_GATSBY_ROOT_BUILD_CACHE/public
+
+    if [ ! -d "$LAGOON_GATSBY_ROOT_BUILD_CACHE" ]; then
+        echo "Error: The root build cach directory cannot be found or created: $LAGOON_GATSBY_ROOT_BUILD_CACHE"
+        return 230;
+    fi
+
+    $RSYNC -a $LAGOON_GATSBY_ROOT_BUILD_CACHE/.cache $LAGOON_GATSBY_APP/
+    CACHE_IMPORT_RET=$?
+    if [ $CACHE_IMPORT_RET -gt 0 ]; then
+        echo "Error: Importing .cache for incremental build failed"
+        return 228
+    fi
+
+    $RSYNC -a $LAGOON_GATSBY_ROOT_BUILD_CACHE/public $LAGOON_GATSBY_APP/
+    PUBLIC_IMPORT_RET=$?
+    if [ $PUBLIC_IMPORT_RET -gt 0 ]; then
+        echo "Error: Importing public for incremental build failed"
+        return 228
+    fi
+
+    cd $LAGOON_GATSBY_APP
+
+    gatsby build --log-pages
+    BUILDRET=$?
+
+    if [ $BUILDRET -gt 0 ]; then
+        echo "The incremental build failed"
+        return 210;
+    fi;
+
+    $RSYNC -a $LAGOON_GATSBY_APP/.cache $LAGOON_GATSBY_ROOT_BUILD_CACHE/
+    $RSYNC -a $LAGOON_GATSBY_APP/public $LAGOON_GATSBY_ROOT_BUILD_CACHE/
+
+    cd $_PWD
+    return 0;
+}
+
+clean_build() {
+    rm -rf $LAGOON_GATSBY_APP/.cache
+    rm -rf $LAGOON_GATSBY_ROOT_BUILD_CACHE/.cache
+
+    rm -rf $LAGOON_GATSBY_APP/public
+    rm -rf $LAGOON_GATSBY_ROOT_BUILD_CACHE/public
+
+    incremental_build
+    BUILDRET=$?
+
+    return $BUILDRET
+}
+
+# --------------------------------------------------------------------#
+# Paths configs
+export _PWD=`pwd`
+
+if [ -z "$LAGOON_GATSBY_APP" ]; then
+    echo "Missing LAGOON_GATSBY_APP ENV variable: $LAGOON_GATSBY_APP"
+    exit 201
+fi
+
+if [ -z "$LAGOON_GATSBY_STORAGE" ]; then
+    echo "Missing LAGOON_GATSBY_STORAGE ENV variable: $LAGOON_GATSBY_STORAGE"
+    exit 201
+fi
+
+export LAGOON_GATSBY_ROOT_BUILD_CACHE=$LAGOON_GATSBY_STORAGE/gatsby_build_cache
+
+export RSYNC=`which rsync`
+
+# Flags
+export GATSBY_EXPERIMENTAL_PAGE_BUILD_ON_DATA_CHANGES=true
+export NODE_ENV=production
+# ------------------------------------------------------------------- #
+
+START=`date +%s`
+
+if [ "$1" == "clean" ]; then
+    LAGOON_GATSBY_BUILDTYPE="clean"
+    echo "Build-$LAGOON_GATSBY_BUILDTYPE starting"
+    clean_build
+else
+    LAGOON_GATSBY_BUILDTYPE="incremental"
+    echo "Build-$LAGOON_GATSBY_BUILDTYPE starting"
+    incremental_build
+fi;
+BUILDRET=$?
+
+END=`date +%s`
+DURATION=$(expr $END - $START);
+
+echo "Build-$LAGOON_GATSBY_BUILDTYPE complete in $DURATION seconds"
+exit $BUILDRET
