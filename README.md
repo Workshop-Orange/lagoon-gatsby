@@ -10,9 +10,14 @@ The `lagoon-gatsby` binary requires rsync to be installed in your container.
 TODO
 
 ## Usage
+You can set `LAGOON_GATSBY_APP` and `LAGOON_GATSBY_STORAGE` in your docker image build, in Lagoon, or on the command line
+
+`LAGOON_GATSBY_APP`: Generally where you Gatsby app lives (usually /app for Lagoon projects)
+
+`LAGOON_GATSBY_STORAGE`: Persistent storage mounted by Lagoon. If this isn't persistent, incremental builds are impossible
 
 ### Incremental build
-LAGOON_GATSBY_APP=/app LAGOON_GATSBY_STORAGE=/app/storage/ /app/lagoon-gatsby build incremental
+RUN: `LAGOON_GATSBY_APP=/app LAGOON_GATSBY_STORAGE=/app/storage/ /app/lagoon-gatsby build incremental`
 
 ### Clean build
-LAGOON_GATSBY_APP=/app LAGOON_GATSBY_STORAGE=/app/storage/ /app/lagoon-gatsby build clean
+RUN: `LAGOON_GATSBY_APP=/app LAGOON_GATSBY_STORAGE=/app/storage/ /app/lagoon-gatsby build clean`
